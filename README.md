@@ -1,4 +1,4 @@
-# catalyst
+# Catalyst
 Programming Evaluation for Developer Skills Assessment Test
 
 Systems Requirements:
