@@ -1,4 +1,6 @@
 <?php
+//error_reporting(0);
+
 	$shortcmdirective = "u:";
 	$shortcmdirective .= "p:";
 	$shortcmdirective .= "h:";
@@ -9,6 +11,8 @@
 		"dry_run",
 		"help",
 	);
+	
+	$count = 0;
 	
 	$options = getopt($shortcmdirective, $longcmdirective);
 	
@@ -37,10 +41,12 @@
 					if(mysqli_query($connection, $SQL)) {
 						$SQL = "GRANT ALL ON Catalyst.* TO" . $options['u'] . "@" . $options['h'];
 						$DB_selection = mysqli_select_db($connection, 'Catalyst');
-						echo "\n" . "Database Catalyst was created successfully and is used" . "\n";
+						echo "\n" . "Catalyst Database was created successfully and is used" . "\n";
 					} else {
 						echo "\n" . "Error creating database: " . mysqli_error($connection) . "\n";
 					}
+				}else {
+					echo "\n" . "Catalyst Database is currently being used" . "\n";
 				}
 			}
 			
@@ -67,6 +73,7 @@
 					
 					if(!isset($options['dry_run'])){
 						if (mysqli_num_rows($result) > 0) {
+							fgetcsv($fp);
 							while($data = fgetcsv($fp,1000,",")){
 								if($data[0] and (!filter_var($data[2], FILTER_VALIDATE_EMAIL)) === false ) {
 
@@ -77,19 +84,27 @@
 											'".addslashes(strtolower($data[2]))."'
 										)
 									");
-								} elseif (!filter_var($data[2], FILTER_VALIDATE_EMAIL === true)){
+									
+									$count ++;
+								} elseif (!filter_var($data[2], FILTER_VALIDATE_EMAIL) === true){
 									fprintf($fw, "\n" . $data[2] . " is in invalid e-mail format" . "\n");
 								}
 							}
+							
+							echo "\n" . $count . " row(s) have been succesfully inserted to database" . "\n";
 						}else{
-							echo "\n" . "Users Table does not exist, please refer to --help function on how to create the table. Thanks" . "\n";
+							die("\n" . "Users Table does not exist, please refer to --help function on how to create the table. Thanks" . "\n");
 						}
+					}else{
+						echo "\n" . "Application is running in dry run mode" . "\n";
 					}
 					fclose($fp);
 					fclose($fw);
 				}else{
 					die("\n" . "File is invalid" . "\n");
 				}
+			}else{
+				die("\n" . "Please specify file (users) that is intended to be imported to database" . "\n");
 			}
 			
 			$connection->close();
@@ -97,4 +112,5 @@
 			echo "\n" . "Please define MySQL database Host, Username, and Password. For more information on how to specify them please use pre-user-defined CLI --help function that is built within this application. Thank you" . "\n";
 		}
 	}
+	
 ?>
