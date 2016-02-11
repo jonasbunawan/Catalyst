@@ -23,7 +23,7 @@ error_reporting(0);
 	// Storing Value of Command Line Directives by using getopt() function for both short and complete options.
 	$options = getopt($shortcmdirective, $longcmdirective);
 	
-	// First if conditional statement contains function to display help message when --help is called within application execution.
+	// First if conditional statement contains function to display help message when --help is called within application execution. (Separate function can be built)
 	if(isset($options['help'])) {
 		echo "\n" . "Please find below for details of available command line directives that are built within this application (case sensitive)" . "\n"; 
 		echo "\n" . "-u : MySQL username" . "\n";
@@ -34,6 +34,7 @@ error_reporting(0);
 		echo "--dry_run : this will be used with the --file directive in the instance that we want to run the script but not insert into the DB. All other functions will be executed, but the database won't be altered." . "\n";
 		echo "--help : which will output the above list of directives with details." . "\n";
 	} else {
+		// Separate Function can be made here to establish connection with database which then function can be called in main application (high cohesion and low coupling practice)
 		if(isset($options['u']) and isset($options['p']) and isset($options['h'])) {
 			$connection = new mysqli($options['h'], $options['u'], $options['p']);
 		
@@ -44,9 +45,11 @@ error_reporting(0);
 				
 				$DB_selection = mysqli_select_db( $connection,'Catalyst');
 				
+				// If database does not exist which is indicated by unselected database, Catalyst database will be created
 				if(!$DB_selection) {
 					$SQL = 'CREATE DATABASE Catalyst';
 					
+					// Creating Catalyst database which is then followed by granting all privileges for the user to access database if the CREATE DATABASE query is successfully executed
 					if(mysqli_query($connection, $SQL)) {
 						$SQL = "GRANT ALL ON Catalyst.* TO" . $options['u'] . "@" . $options['h'];
 						$DB_selection = mysqli_select_db($connection, 'Catalyst');
@@ -59,6 +62,7 @@ error_reporting(0);
 				}
 			}
 			
+			// Separate Function can be made here to create table in database which then function can be called in main application (high cohesion and low coupling practice)
 			if(isset($options['create_table'])) {
 				$result = mysqli_query($connection, "SHOW TABLES LIKE 'USERS'");
 				
@@ -79,7 +83,8 @@ error_reporting(0);
 					die( "\n" . "Error creating table: " . $connection->error . "\n");
 				}
 			}
-
+			
+			// Separate Function can be made here to process file by importing data onto database which then function can be called in main application (high cohesion and low coupling practice)
 			if(isset($options['file'])){
 				if(file_exists($options['file'])){
 					$fp = fopen($options['file'], "r");
@@ -102,6 +107,8 @@ error_reporting(0);
 						}
 					}
 					
+					
+					// Closing file after processing the data as most of information have been stored in temporary variables which then will be inserted to users table depending on how the program is run
 					fclose($fp);
 					fclose($fw);
 					
