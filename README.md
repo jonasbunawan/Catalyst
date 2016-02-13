@@ -17,7 +17,7 @@ Task 1
 Assumptions:
 Provided users.csv(with header line) would be used for application execution. Simple modification can be easily made to adjust the application to be used for file without header(stated as comment within the script).
 No separate scripts would be included within the user_upload.php script, that is why all of the functions are pre-defined in the single script.
-As application is script command line based program which execute the script by line, more lines means slower application running time, all of the functions are not pre-defined within separate different functions blocks, but conditional statements take in place.
+As application is script command line based program which execute the script by line, more lines means slower application running time, not all of the functions are pre-defined within separate distinguished functions blocks, but conditional statements take in place.
 
 Technical Assumptions:
 FILTER_VALIDATE_EMAIL will be sufficient enough to validate common valid e-mail addresses, although some valid e-mail addresses are considered to be invalid by the built-in function.
