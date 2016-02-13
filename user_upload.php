@@ -2,6 +2,57 @@
 // Statement to hide unnecessary MySQL Error Message. If System Error Message is preferred to be displayed, simply comment out the statement by placing // at the front of statement just like this comment line.
 error_reporting(0);
 
+Function Help($bool) {
+	$message = "\n" . "Please find below for details of available command line directives that are built within this application (case sensitive)" . "\n" .
+				"\n" . "-u : MySQL username" . "\n" .
+				"-p : MySQL password" . "\n" .
+				"-h : MySQL host" . "\n" .
+				"--file csvfilename : this is the name of the CSV to be parsed" . "\n" .
+				"--create_table : this will cause the MySQL users table to be built (and no further action will be taken)" . "\n" .
+				"--dry_run : this will be used with the --file directive in the instance that we want to run the script but not insert into the DB. All other functions will be executed, but the database won't be altered." . "\n" .
+				"--help : which will output the above list of directives with details." . "\n";
+	
+	if($bool === TRUE) {
+		echo $message;
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+};
+
+Function Connection($user, $host, $pass){
+	$connection = new mysqli($host, $user, $pass);
+		
+			if($connection -> connect_error){
+				die("\n" . "Connection failed: " . $connection -> connect_error . "\n");
+			} else {
+				echo "\n" . "Successfully Connected" . "\n";
+				return $connection;
+			}
+}
+
+Function DatabaseSelection($connection, $database){
+	$DB_selection = mysqli_select_db($connection, $database);
+	
+	if(!$DB_selection) {
+		return FALSE;
+	}else{
+		echo "\n" . $database . " is currently being used" . "\n";
+		return TRUE;
+	}
+}
+
+Function DatabaseCreation($connection, $database){
+	$SQL = "CREATE DATABASE " . $database;
+	if(mysqli_query($connection, $SQL)) {
+		$SQL = "GRANT ALL ON Catalyst.* TO" . $options['u'] . "@" . $options['h'];
+		$DB_selection = mysqli_select_db($connection, 'Catalyst');
+		echo "\n" . "Catalyst Database was created successfully and is used" . "\n";
+	} else {
+		echo "\n" . "Error creating database: " . mysqli_error($connection) . "\n";
+	}
+}
+
 	// Command Line Directives in short form
 	$shortcmdirective = "u:";
 	$shortcmdirective .= "p:";
@@ -23,47 +74,15 @@ error_reporting(0);
 	// Storing Value of Command Line Directives by using getopt() function for both short and complete options.
 	$options = getopt($shortcmdirective, $longcmdirective);
 	
-	// First if conditional statement contains function to display help message when --help is called within application execution. (Separate function can be built)
-	if(isset($options['help'])) {
-		echo "\n" . "Please find below for details of available command line directives that are built within this application (case sensitive)" . "\n"; 
-		echo "\n" . "-u : MySQL username" . "\n";
-		echo "-p : MySQL password" . "\n";
-		echo "-h : MySQL host" . "\n";
-		echo "--file csvfilename : this is the name of the CSV to be parsed" . "\n";
-		echo "--create_table : this will cause the MySQL users table to be built (and no further action will be taken)" . "\n";
-		echo "--dry_run : this will be used with the --file directive in the instance that we want to run the script but not insert into the DB. All other functions will be executed, but the database won't be altered." . "\n";
-		echo "--help : which will output the above list of directives with details." . "\n";
-	} else {
-		// Separate Function can be made here to establish connection with database which then function can be called in main application (high cohesion and low coupling practice)
-		if(isset($options['u']) and isset($options['p']) and isset($options['h'])) {
-			$connection = new mysqli($options['h'], $options['u'], $options['p']);
-		
-			if($connection -> connect_error){
-				die("\n" . "Connection failed: " . $connection -> connect_error . "\n");
-			} else {
-				echo "\n" . "Successfully Connected" . "\n";
-				
-				$DB_selection = mysqli_select_db( $connection,'Catalyst');
-				
-				// If database does not exist which is indicated by unselected database, Catalyst database will be created
-				if(!$DB_selection) {
-					$SQL = 'CREATE DATABASE Catalyst';
-					
-					// Creating Catalyst database which is then followed by granting all privileges for the user to access database if the CREATE DATABASE query is successfully executed
-					if(mysqli_query($connection, $SQL)) {
-						$SQL = "GRANT ALL ON Catalyst.* TO" . $options['u'] . "@" . $options['h'];
-						$DB_selection = mysqli_select_db($connection, 'Catalyst');
-						echo "\n" . "Catalyst Database was created successfully and is used" . "\n";
-					} else {
-						echo "\n" . "Error creating database: " . mysqli_error($connection) . "\n";
-					}
-				}else {
-					echo "\n" . "Catalyst Database is currently being used" . "\n";
-				}
-			}
+	// First if conditional statement contains function to display help message when --help is called within application execution.
+	if(Help(isset($options['help'])) === FALSE){
+	
+	if(isset($options['u']) and isset($options['p']) and isset($options['h'])) {
+			$connection = Connection($options['u'], $options['h'], $options['p']);
 			
-			// Separate Function can be made here to create table in database which then function can be called in main application (high cohesion and low coupling practice)
-			if(isset($options['create_table'])) {
+			if(DatabaseSelection($connection, 'Catalyst') === FALSE) {
+				DatabaseCreation($connection, 'Catalyst');
+			}elseif(isset($options['create_table'])) {
 				$result = mysqli_query($connection, "SHOW TABLES LIKE 'USERS'");
 				
 				$SQL = "CREATE TABLE IF NOT EXISTS Users (
@@ -84,7 +103,6 @@ error_reporting(0);
 				}
 			}
 			
-			// Separate Function can be made here to process file by importing data onto database which then function can be called in main application (high cohesion and low coupling practice)
 			if(isset($options['file'])){
 				if(file_exists($options['file'])){
 					$fp = fopen($options['file'], "r");
@@ -107,8 +125,6 @@ error_reporting(0);
 						}
 					}
 					
-					
-					// Closing file after processing the data as most of information have been stored in temporary variables which then will be inserted to users table depending on how the program is run
 					fclose($fp);
 					fclose($fw);
 					
@@ -141,6 +157,8 @@ error_reporting(0);
 					die("\n" . "File is invalid" . "\n");
 				}
 				echo "\n" . $rows . " row(s) have been succesfully inserted to database" . "\n";
+			}else{
+				echo "\n" . "Please specify the file that is intended to be imported" . "\n";
 			}
 			
 			$connection->close();
